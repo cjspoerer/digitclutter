@@ -1,4 +1,4 @@
-# Digitclutter
+# Digit Clutter
 
 Contains python scripts for generating digit clutter and digit debris stimuli.
 
