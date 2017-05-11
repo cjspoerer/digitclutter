@@ -119,7 +119,7 @@ def read_image_set(csv_fname):
 
 def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None,
                        character_set=DIGITS, grayscale=True, wdir='./temp_workspace',
-                       overwrite_wdir=False):
+                       overwrite_wdir=False, delete_bmps=False):
     '''
     Saves a mat file containing the images and labels. Labels are in the format
     of integers or binary vectors
@@ -135,6 +135,7 @@ def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None
                          already exist and will be deleted afterwards
         overwrite_wdir:  a bool indicating whether to overwrite any dir matching wdir
                          the contents of this directory will be deleted
+        delete_bmps:     a bool indicating whether to delete full size bmps once saved as arrays
     '''
     n_images = len(clutter_list)
 
@@ -185,18 +186,15 @@ def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None
             rmtree(wdir)
             raise FileNotFoundError('Image {0} failed to render with the following command.\n\
             {1}'.format(resize_fname_list[i]+'.bmp', resize_cmd))
+        elif delete_bmps:
+            os.remove(fname_list[i]+'.bmp')
 
     # Generate image array
     print('Generating image arrays')
     images = np.zeros((n_images, image_save_size[0], image_save_size[1], 3))
     for i in range(n_images):
-        #try:
         images[i] = np.array(Image.open(resize_fname_list[i]+'.bmp'))
-        # except FileNotFoundError:
-        #     rmtree(wdir)
-        #     raise FileNotFoundError('Image {0} not found. There may have been an error in the \
-        #     image generation process'.format(resize_fname_list[i]+'.bmp'))
-
+        
     if grayscale:
         images = images.mean(axis=3, keepdims=True)
 

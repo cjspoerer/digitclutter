@@ -15,3 +15,5 @@ Also requires ImageMagick. The download and installation instructions can be fou
 ## Basic usage
 
 Firstly, just ensure your files are in a directory on your python path. Having a look at the following working [example](example_script/test_clutter_code.ipynb) should give an idea of how to generate stimulus sets.
+
+A [script](example_script/light_debris_generator.py) is also included that generates 1000 images with the same attributes as the light debris image set described in the paper.
