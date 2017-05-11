@@ -170,7 +170,7 @@ def make_debris_templates(**kwargs):
             while not success and attempts < 2:
                 # Generate the template image
                 image_size_str = '{0}x{1}'.format(image_size[0], image_size[1])
-                image_cmd = 'convert xc:rgba(119,119,119,1.0) -resize '\
+                image_cmd = 'magick xc:rgba(119,119,119,1.0) -resize '\
                 +image_size_str+'! +antialias '
                 # Write the outline command
                 im_kwargs = {'font':font, 'fontsize':fontsize,
@@ -178,28 +178,28 @@ def make_debris_templates(**kwargs):
                              'edge_col':'rgba(255,255,255,1.0)',
                              'linewidth':linewidth, 'xscale':size_mean[0],
                              'yscale':size_mean[1], 'identity':char}
-                outline_cmd = '''-draw "gravity Center font {font}
-                                 font-size {fontsize!r} fill rgba(0.0,0.0,0.0,0.0)
-                                 stroke {edge_col!r} stroke-width {linewidth!r} 
-                                 scale {xscale!r},{yscale!r}
-                                 text 0,0 {identity!r}" '''.format(**im_kwargs)
+                outline_cmd = '-draw "gravity Center font {font} \
+                               font-size {fontsize!r} fill rgba(0.0,0.0,0.0,0.0) \
+                               stroke {edge_col!r} stroke-width {linewidth!r} \
+                               scale {xscale!r},{yscale!r} \
+                               text 0,0 {identity!r}" '.format(**im_kwargs)
                 # Write the face command
-                face_cmd = '''-draw "gravity Center font {font}
-                              font-size {fontsize!r} fill {face_col!r}
-                              stroke rgba(0.0,0.0,0.0,0.0) stroke-width {linewidth!r} 
-                              scale {xscale!r},{yscale!r}
-                              text 0,0 {identity!r}" '''.format(**im_kwargs)
-                image_cmd += outline_cmd + face_cmd + 'BMP3:{0}.bmp'.format(template_fnames[k])
+                face_cmd = '-draw "gravity Center font {font} \
+                            font-size {fontsize!r} fill {face_col!r} \
+                            stroke rgba(0.0,0.0,0.0,0.0) stroke-width {linewidth!r} \
+                            scale {xscale!r},{yscale!r} \
+                            text 0,0 {identity!r}" '.format(**im_kwargs)
+                image_cmd += outline_cmd + face_cmd + 'BMP3:{0!r}.bmp'.format(template_fnames[k])
                 shlex_cmd(image_cmd)
                 # Resize and trim the image
-                resize_cmd = 'convert {0}.bmp -scale {1}x{2} BMP3:{0}.bmp'\
+                resize_cmd = 'magick {0!r}.bmp -scale {1}x{2} BMP3:{0!r}.bmp'\
                 .format(template_fnames[k], image_resize[0], image_resize[1])
                 shlex_cmd(resize_cmd)
-                trim_cmd = 'convert {0}.bmp -trim +repage {0}.bmp'.format(template_fnames[k])
+                trim_cmd = 'magick {0!r}.bmp -trim +repage {0!r}.bmp'.format(template_fnames[k])
                 shlex_cmd(trim_cmd)
 
                 # Generate the mask
-                mask_cmd = 'convert xc:rgba(0,0,0,1.0) -resize '+image_size_str\
+                mask_cmd = 'magick xc:rgba(0,0,0,1.0) -resize '+image_size_str\
                 +'! +antialias '
                 # Write the mask command
                 im_kwargs = {'font':font, 'fontsize':fontsize,
@@ -208,18 +208,18 @@ def make_debris_templates(**kwargs):
                              'linewidth':linewidth, 'identity':char,
                              'xscale':size_mean[0], 'yscale':size_mean[1]}
 
-                mask_cmd += '''-draw "gravity Center font {font}
-                               font-size {fontsize!r} fill {face_col!r}
-                               stroke {edge_col!r} stroke-width {linewidth!r} 
-                               scale {xscale!r},{yscale!r}
-                               text 0,0 {identity!r}" '''.format(**im_kwargs)
-                mask_cmd += 'BMP3:{0}.bmp'.format(mask_fnames[k])
+                mask_cmd += '-draw "gravity Center font {font} \
+                             font-size {fontsize!r} fill {face_col!r} \
+                             stroke {edge_col!r} stroke-width {linewidth!r} \
+                             scale {xscale!r},{yscale!r} \
+                             text 0,0 {identity!r}" '.format(**im_kwargs)
+                mask_cmd += 'BMP3:{0!r}.bmp'.format(mask_fnames[k])
                 shlex_cmd(mask_cmd)
                 # Resize and trim the image
-                resize_cmd = 'convert {0}.bmp -scale {1}x{2} BMP3:{0}.bmp'\
+                resize_cmd = 'magick {0!r}.bmp -scale {1}x{2} BMP3:{0!r}.bmp'\
                 .format(mask_fnames[k], image_resize[0], image_resize[1])
                 shlex_cmd(resize_cmd)
-                trim_cmd = 'convert {0}.bmp -trim +repage {0}.bmp'.format(mask_fnames[k])
+                trim_cmd = 'magick {0!r}.bmp -trim +repage {0!r}.bmp'.format(mask_fnames[k])
                 shlex_cmd(trim_cmd)
 
                 # Open and the mask and the template image
@@ -274,7 +274,7 @@ def make_debris(n_images, wdir='./temp_workspace', **kwargs):
         linewidth:       linewidth as an integer
         size_mean:       a sequence that contains the scaling coefficient for
                          each dimension, [x_scale, y_scale]
-    
+
     returns:
         debris_arr: an array containing the debris generated
     '''
@@ -340,16 +340,28 @@ def make_debris(n_images, wdir='./temp_workspace', **kwargs):
 
             # Set the possible start and end points for taking the crop from
             # the character that will make the fragment
-            crop_x_start = np.random.randint(deb_char.shape[0] - debris_size_j)
-            crop_y_start = np.random.randint(deb_char.shape[1] - debris_size_j)
+            if deb_char.shape[0] - debris_size_j == 0:
+                crop_x_start = 0
+            else:
+                crop_x_start = np.random.randint(deb_char.shape[0] - debris_size_j)
+            if deb_char.shape[1] - debris_size_j == 0:
+                crop_y_start = 0
+            else:
+                crop_y_start = np.random.randint(deb_char.shape[1] - debris_size_j)
 
             # Get the crop
             debris_ij = deb_char[crop_x_start:crop_x_start+debris_size_j,
                                  crop_y_start:crop_y_start+debris_size_j]
 
             # Set the window where the debris will be placed
-            deb_x_start = np.random.randint(image_save_size[0] - debris_size_j)
-            deb_y_start = np.random.randint(image_save_size[1] - debris_size_j)
+            if image_save_size[0] - debris_size_j == 0:
+                deb_x_start = 0
+            else:
+                deb_x_start = np.random.randint(image_save_size[0] - debris_size_j)
+            if image_save_size[1] - debris_size_j == 0:
+                deb_y_start = 0
+            else:
+                deb_y_start = np.random.randint(image_save_size[1] - debris_size_j)
 
             # Set the window where the debris will be placed
             x_0, x_1 = deb_x_start, deb_x_start+debris_size_j
@@ -383,8 +395,8 @@ def add_debris(clutter, debris):
     return np.expand_dims(clutter_with_debris, axis=3)
 
 def get_character_masks():
-    pass
+    raise NotImplementedError
 
 def calculate_occlussion():
-    pass
+    raise NotImplementedError
 

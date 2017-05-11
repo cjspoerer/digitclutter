@@ -2,6 +2,7 @@
 Contains the clutter class
 '''
 
+import os
 from digitclutter.utils import shlex_cmd
 
 class Clutter:
@@ -40,12 +41,12 @@ class Clutter:
         if fname is None and self.fname is None:
             raise ValueError('fname is not defined')
         elif fname is None:
-            fname = self.fname
+            fname = os.path.abspath(self.fname)
 
         # Initialise the background
         image_size_str = '{0}x{1}'.format(self.image_size[0], self.image_size[1])
         kwargs = {'bg_colour':'rgba(119,119,119,1.0)', 'image_size_str':image_size_str}
-        image_cmd = 'convert xc:{bg_colour} -resize {image_size_str}! '.format(**kwargs)
+        image_cmd = 'magick xc:{bg_colour} -resize {image_size_str}! '.format(**kwargs)
 
         # Build a layer of each character by cycling through the letters
         for char in self.clutter_sample:
@@ -62,16 +63,17 @@ class Clutter:
                                                           char.edge_colour[3])
 
             # First write the command for the outline of the character
+            # Work out how to remove line endings
             kwargs = {'font':char.font, 'fontsize':char.fontsize,
                       'face_col':'rgba(0.0,0.0,0.0,0.0)',
                       'edge_col':edge_col_str, 'linewidth':char.linewidth,
                       'x':x_pos, 'y':y_pos, 'xscale':char.size_scale[0],
                       'yscale':char.size_scale[1], 'identity':char.identity}
-            outline_cmd = '''-draw "gravity Center font {font}
-                    font-size {fontsize!r} fill {face_col}
-                    stroke {edge_col} stroke-width {linewidth!r}
-                    scale {xscale!r},{yscale!r} text {x!r},{y!r}
-                    {identity!r}" '''.format(**kwargs)
+            outline_cmd = '-draw "gravity Center font {font} \
+                    font-size {fontsize!r} fill {face_col} \
+                    stroke {edge_col} stroke-width {linewidth!r} \
+                    scale {xscale!r},{yscale!r} text {x!r},{y!r} \
+                    {identity!r}" '.format(**kwargs)
 
             # The write the command for the face of the character
             kwargs = {'font':char.font, 'fontsize':char.fontsize,
@@ -79,15 +81,16 @@ class Clutter:
                       'linewidth':char.linewidth, 'x':x_pos, 'y':y_pos,
                       'xscale':char.size_scale[0], 'yscale':char.size_scale[1],
                       'identity':char.identity}
-            face_cmd = '''-draw "gravity Center font {font}
-                        font-size {fontsize!r} fill {face_col}
-                        stroke {edge_col} stroke-width {linewidth!r}
-                        scale {xscale!r},{yscale!r} text {x!r},{y!r}
-                        {identity!r}" '''.format(**kwargs)
+            face_cmd = '-draw "gravity Center font {font} \
+                        font-size {fontsize!r} fill {face_col} \
+                        stroke {edge_col} stroke-width {linewidth!r} \
+                        scale {xscale!r},{yscale!r} text {x!r},{y!r} \
+                        {identity!r}" '.format(**kwargs)
+
             image_cmd += outline_cmd + face_cmd
 
         # Add the command to save the image as a BMP
-        image_cmd += 'BMP3:{0}.bmp'.format(fname)
+        image_cmd += 'BMP3:{0!r}.bmp'.format(fname)
 
         # Add a thread limit if necessary
         if thread_limit is not None:
@@ -95,6 +98,10 @@ class Clutter:
 
         # Submit the image command
         shlex_cmd(image_cmd)
+
+        if not os.path.exists(fname+'.bmp'):
+            raise FileNotFoundError('Image {0} failed to render with the following command.\n\
+            {1}'.format(fname+'.bmp', image_cmd))
 
     def render_clutter(self, fname=None, thread_limit=None):
         '''
@@ -109,6 +116,8 @@ class Clutter:
             raise ValueError('Both fname and self.fname are undefined')
         elif fname is None:
             fname = self.fname
+        elif fname is not None:
+            fname = os.path.abspath(fname)
 
         if self.composition_type == 'occlusion':
             self.render_occlussion(fname, thread_limit)

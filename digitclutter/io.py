@@ -48,15 +48,21 @@ def name_files(save_dir, clutter_list=None, n_images=None, prefix='image'):
     else:
         return clutter_list
 
-def save_image_set(clutter_list, csv_fname):
+def save_image_set(clutter_list, csv_fname, overwrite=True):
     '''
     Saves the list of Clutter objects to a CSV file.
 
     Args:
         clutter_list: a list of Clutter objects
         csv_fname:    a str giving a path to save the csv
+        overwrite:    a bool if True it will overwrite pre-existing files with the same name
     '''
-    with open(csv_fname, 'w') as csvfile:
+    if os.path.exists(csv_fname) and not overwrite:
+        raise FileExistsError(csv_fname + ' exists. Set overwrite')
+    elif os.path.exists(csv_fname):
+        print('Overwriting ' + csv_fname)
+        os.remove(csv_fname)
+    with open(csv_fname, 'w', newline='') as csvfile:
         # Open the csv file
         fwriter = csv.writer(csvfile, delimiter=',', quotechar='|')
         for clutter in clutter_list:
@@ -68,7 +74,7 @@ def save_image_set(clutter_list, csv_fname):
                                  + list(char.face_colour) + list(char.edge_colour)\
                                  + [char.linewidth]
             # Add the parameters for the whole image and save the row
-            fwriter.writerow([clutter.fname, clutter.composition_type, clutter.n_characters] 
+            fwriter.writerow([clutter.fname, clutter.composition_type, clutter.n_characters]
                              + list(clutter.image_size) + clutter_chars)
 
 def read_image_set(csv_fname):
@@ -112,7 +118,8 @@ def read_image_set(csv_fname):
     return clutter_list
 
 def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None,
-                       character_set=DIGITS, grayscale=True, wdir='./temp_workspace'):
+                       character_set=DIGITS, grayscale=True, wdir='./temp_workspace',
+                       overwrite_wdir=False):
     '''
     Saves a mat file containing the images and labels. Labels are in the format
     of integers or binary vectors
@@ -125,7 +132,9 @@ def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None
                          first
         grayscale:       a bool indicating whether to convert images to grayscale
         wdir:            working directory for modifying images, should not
-                        already exist and will be deleted afterwards
+                         already exist and will be deleted afterwards
+        overwrite_wdir:  a bool indicating whether to overwrite any dir matching wdir
+                         the contents of this directory will be deleted
     '''
     n_images = len(clutter_list)
 
@@ -136,6 +145,9 @@ def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None
     wdir = os.path.abspath(wdir)
     print('Using '+wdir+' as the working directory')
     if not os.path.exists(wdir):
+        os.makedirs(wdir)
+    elif overwrite_wdir:
+        rmtree(wdir)
         os.makedirs(wdir)
     else:
         raise FileExistsError('The defined working directory'+wdir+' exists. \
@@ -165,15 +177,26 @@ def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None
     os.mkdir(resized_dir)
     resize_fname_list = name_files(resized_dir, n_images=n_images)
     for i in range(n_images):
-        resize_cmd = 'convert {0}.bmp -scale {1}x{2} BMP3:{3}.bmp'.format(
+        resize_cmd = 'magick {0!r}.bmp -scale {1}x{2} BMP3:{3!r}.bmp'.format(
             fname_list[i], image_save_size[0], image_save_size[1], resize_fname_list[i])
         shlex_cmd(resize_cmd)
+
+        if not os.path.exists(resize_fname_list[i]+'.bmp'):
+            rmtree(wdir)
+            raise FileNotFoundError('Image {0} failed to render with the following command.\n\
+            {1}'.format(resize_fname_list[i]+'.bmp', resize_cmd))
 
     # Generate image array
     print('Generating image arrays')
     images = np.zeros((n_images, image_save_size[0], image_save_size[1], 3))
     for i in range(n_images):
+        #try:
         images[i] = np.array(Image.open(resize_fname_list[i]+'.bmp'))
+        # except FileNotFoundError:
+        #     rmtree(wdir)
+        #     raise FileNotFoundError('Image {0} not found. There may have been an error in the \
+        #     image generation process'.format(resize_fname_list[i]+'.bmp'))
+
     if grayscale:
         images = images.mean(axis=3, keepdims=True)
 

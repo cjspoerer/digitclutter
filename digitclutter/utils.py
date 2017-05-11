@@ -5,10 +5,9 @@ Contains utility functions
 import shlex
 from subprocess import Popen
 
-PRINT_CMD = False
 DIGITS = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 
-def shlex_cmd(command, print_cmd=PRINT_CMD):
+def shlex_cmd(command, print_cmd=False):
     '''
     A convinience function that submits a command using shlex and
     subprocess.Popen.
