@@ -10,7 +10,7 @@ Requires the following python packages, scipy, numpy and Pillow. These should be
 pip install scipy numpy Pillow
 ```
 
-Also requires ImageMagick. The download and installation instructions can be found [here](http://www.imagemagick.org/script/download.php).
+Also requires ImageMagick (the code has been tested on version 7). The download and installation instructions can be found [here](http://www.imagemagick.org/script/download.php).
 
 ## Basic usage
 
