@@ -189,13 +189,13 @@ def make_debris_templates(**kwargs):
                             stroke rgba(0.0,0.0,0.0,0.0) stroke-width {linewidth!r} \
                             scale {xscale!r},{yscale!r} \
                             text 0,0 {identity!r}" '.format(**im_kwargs)
-                image_cmd += outline_cmd + face_cmd + 'BMP3:{0!r}.bmp'.format(template_fnames[k])
+                image_cmd += outline_cmd + face_cmd + 'BMP3:{0!r}'.format(template_fnames[k]+'.bmp')
                 shlex_cmd(image_cmd)
                 # Resize and trim the image
-                resize_cmd = 'magick {0!r}.bmp -scale {1}x{2} BMP3:{0!r}.bmp'\
-                .format(template_fnames[k], image_resize[0], image_resize[1])
+                resize_cmd = 'magick {0!r} -scale {1}x{2} BMP3:{0!r}'\
+                .format(template_fnames[k]+'.bmp', image_resize[0], image_resize[1])
                 shlex_cmd(resize_cmd)
-                trim_cmd = 'magick {0!r}.bmp -trim +repage {0!r}.bmp'.format(template_fnames[k])
+                trim_cmd = 'magick {0!r} -trim +repage {0!r}'.format(template_fnames[k]+'.bmp')
                 shlex_cmd(trim_cmd)
 
                 # Generate the mask
@@ -213,13 +213,13 @@ def make_debris_templates(**kwargs):
                              stroke {edge_col!r} stroke-width {linewidth!r} \
                              scale {xscale!r},{yscale!r} \
                              text 0,0 {identity!r}" '.format(**im_kwargs)
-                mask_cmd += 'BMP3:{0!r}.bmp'.format(mask_fnames[k])
+                mask_cmd += 'BMP3:{0!r}'.format(mask_fnames[k]+'.bmp')
                 shlex_cmd(mask_cmd)
                 # Resize and trim the image
-                resize_cmd = 'magick {0!r}.bmp -scale {1}x{2} BMP3:{0!r}.bmp'\
-                .format(mask_fnames[k], image_resize[0], image_resize[1])
+                resize_cmd = 'magick {0!r} -scale {1}x{2} BMP3:{0!r}'\
+                .format(mask_fnames[k]+'.bmp', image_resize[0], image_resize[1])
                 shlex_cmd(resize_cmd)
-                trim_cmd = 'magick {0!r}.bmp -trim +repage {0!r}.bmp'.format(mask_fnames[k])
+                trim_cmd = 'magick {0!r} -trim +repage {0!r}'.format(mask_fnames[k]+'.bmp')
                 shlex_cmd(trim_cmd)
 
                 # Open and the mask and the template image
@@ -314,7 +314,7 @@ def make_debris(n_images, wdir='./temp_workspace', **kwargs):
 
     # Initialise debris array
     debris_arr = np.full((n_images, image_save_size[0], image_save_size[1], 2),
-                         119, dtype=np.int64)
+                         119, dtype=np.uint8)
     debris_arr[:, :, :, 1] = 0
     for i in range(n_images):
         # Select number of debris to appear in this instance
@@ -392,7 +392,7 @@ def add_debris(clutter, debris):
         choice_list = [clutter[i, :, :], debris[i, :, :, 0]]
         clutter_with_debris[i] = np.select(cond_list, choice_list)
 
-    return np.expand_dims(clutter_with_debris, axis=3)
+    return np.expand_dims(clutter_with_debris, axis=3).astype(np.uint8)
 
 def get_character_masks():
     raise NotImplementedError

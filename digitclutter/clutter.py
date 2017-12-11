@@ -90,7 +90,7 @@ class Clutter:
             image_cmd += outline_cmd + face_cmd
 
         # Add the command to save the image as a BMP
-        image_cmd += 'BMP3:{0!r}.bmp'.format(fname)
+        image_cmd += 'BMP3:{0!r}'.format(fname+'.bmp')
 
         # Add a thread limit if necessary
         if thread_limit is not None:
@@ -120,7 +120,7 @@ class Clutter:
             fname = os.path.abspath(fname)
 
         if self.composition_type == 'occlusion':
-            self.render_occlussion(fname, thread_limit)
+            self.render_occlusion(fname, thread_limit)
         else:
             raise ValueError('Composition type {0} is not recognised'\
             .format(self.composition_type))

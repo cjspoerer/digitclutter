@@ -178,8 +178,8 @@ def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None
     os.mkdir(resized_dir)
     resize_fname_list = name_files(resized_dir, n_images=n_images)
     for i in range(n_images):
-        resize_cmd = 'magick {0!r}.bmp -scale {1}x{2} BMP3:{3!r}.bmp'.format(
-            fname_list[i], image_save_size[0], image_save_size[1], resize_fname_list[i])
+        resize_cmd = 'magick {0!r} -scale {1}x{2} BMP3:{3!r}'.format(
+            fname_list[i]+'.bmp', image_save_size[0], image_save_size[1], resize_fname_list[i]+'.bmp')
         shlex_cmd(resize_cmd)
 
         if not os.path.exists(resize_fname_list[i]+'.bmp'):
@@ -191,18 +191,18 @@ def save_images_as_mat(mat_fname, clutter_list, image_save_size, fname_list=None
 
     # Generate image array
     print('Generating image arrays')
-    images = np.zeros((n_images, image_save_size[0], image_save_size[1], 3))
+    images = np.zeros((n_images, image_save_size[0], image_save_size[1], 3), dtype=np.uint8)
     for i in range(n_images):
-        images[i] = np.array(Image.open(resize_fname_list[i]+'.bmp'))
+        images[i] = np.array(Image.open(resize_fname_list[i]+'.bmp'), dtype=np.uint8)
         
     if grayscale:
-        images = images.mean(axis=3, keepdims=True)
+        images = images.mean(axis=3, keepdims=True, dtype=np.uint8)
 
     # Generate target arrays
     print('Generating target arrays')
     max_chars = np.max([clutter.n_characters for clutter in clutter_list])
-    targets = np.zeros((n_images, max_chars))
-    binary_targets = np.zeros((n_images, len(character_set)))
+    targets = np.zeros((n_images, max_chars), dtype=np.uint8)
+    binary_targets = np.zeros((n_images, len(character_set)), dtype=np.uint8)
 
     for i, clutter in enumerate(clutter_list):
         char_list = clutter.get_character_list()

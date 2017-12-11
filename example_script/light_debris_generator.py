@@ -43,7 +43,7 @@ images_with_debris = generate.add_debris(images_dict['images'], debris_array)
 images_with_debris_dict = {
     'images':images_with_debris,
     'targets':images_dict['targets'],
-    'binary_targets':['binary_targets']
+    'binary_targets':images_dict['binary_targets']
     }
 savemat('light_debris/light_debris_with_debris.mat', images_with_debris_dict)
 print('Done. Images saved at {0}'.format(abspath('light_debris/light_debris_with_debris.mat')))
